@@ -16,6 +16,16 @@ namespace AuthExample
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication("AuthExample")
+                .AddCookie("AuthExample", opt => {
+                    opt.Cookie.Name = "auth-example";
+                    opt.LoginPath = "/Home/Login";
+                    opt.AccessDeniedPath = "/Home/AccessDenied";
+                    opt.LogoutPath = "/Home/Logout";
+                });
+
+            services.AddControllersWithViews();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -28,12 +38,17 @@ namespace AuthExample
 
             app.UseRouting();
 
+            app.UseAuthentication();
+
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Hello World!");
-                });
+                endpoints.MapDefaultControllerRoute();
+                //endpoints.MapGet("/", async context =>
+                //{
+                //    await context.Response.WriteAsync("Hello World!");
+                //});
             });
         }
     }

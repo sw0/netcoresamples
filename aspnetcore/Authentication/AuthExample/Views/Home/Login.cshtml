@@ -1,0 +1,15 @@
+﻿
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h1>Login</h1>
+
+
+
+<form action="/Home/Login?ReturnUrl=@Html.Raw(Html.UrlEncoder.Encode(ViewBag.ReturnUrl))" method="post">
+    username: <input type="text" name="username" value="slin" /><br />
+    password: <input type="password" name="password" value="123456!" /><br />
+    role: <input type="text" name="role" value="user" />   Options: admin, sales, or OTHERS....<br />
+    <button type="submit" value="Login">Login</button>
+</form>
