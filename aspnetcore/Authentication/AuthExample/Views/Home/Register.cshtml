@@ -1,0 +1,21 @@
+﻿
+@{
+    ViewData["Title"] = "Register";
+
+    var error = ViewBag.ErrorMessage as string;
+}
+
+<h1>Login</h1>
+
+<h2>@error</h2>
+
+<form action="/Home/Register" method="post">
+    username: <input type="text" name="username" value="slin" /><br />
+    wechat: <input type="text" name="wechat" value="cxyxiaoen" /><br />
+    unionid: <input type="text" name="unionid" value="" /><br />
+    password: <input type="password" name="password" value="123456!" /><br />
+    @*role: <input type="text" name="role" value="user" />   Options: admin, sales, or OTHERS....<br />*@
+    <button type="submit">Register</button>
+</form>
+
+

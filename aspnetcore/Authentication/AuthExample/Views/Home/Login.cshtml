@@ -5,11 +5,18 @@
 
 <h1>Login</h1>
 
-
+@if (!string.IsNullOrEmpty(ViewData["ErrorMessage"] as string))
+{
+    <h2>Error Msg: @ViewData["ErrorMessage"] </h2>
+}
 
 <form action="/Home/Login?ReturnUrl=@Html.Raw(Html.UrlEncoder.Encode(ViewBag.ReturnUrl))" method="post">
     username: <input type="text" name="username" value="slin" /><br />
     password: <input type="password" name="password" value="123456!" /><br />
-    role: <input type="text" name="role" value="user" />   Options: admin, sales, or OTHERS....<br />
+    @*role: <input type="text" name="role" value="user" />   Options: admin, sales, or OTHERS....<br />*@
     <button type="submit" value="Login">Login</button>
 </form>
+
+<p>
+    If you don't have a account, go to <a href="register">register</a> page and create one.
+</p>
