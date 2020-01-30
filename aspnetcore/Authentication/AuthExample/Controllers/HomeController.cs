@@ -1,8 +1,12 @@
 ﻿using AuthExample.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,23 +18,58 @@ namespace AuthExample.Controllers
 {
     public class HomeController : Controller
     {
-        UserManager<WebUser> _userManager;
-        SignInManager<WebUser> _signInManager;
+        //UserManager<WebUser> _userManager;
+        readonly AspNetUserManager<WebUser> _userManager;
+        readonly SignInManager<WebUser> _signInManager;
+        readonly RoleManager<IdentityRole> _roleManager;
 
-        public HomeController(UserManager<WebUser> userManager,
-            SignInManager<WebUser> signInManager)
+        public HomeController(
+            AspNetUserManager<WebUser> userManager,
+            //UserManager<WebUser> userManager,
+            SignInManager<WebUser> signInManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _signInManager = signInManager;
         }
 
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View();
         }
 
         [Authorize]
-        public IActionResult Secret()
+        public async Task<IActionResult> Secret()
+        {
+            DecryptCookie();
+
+            ViewBag.UserName = User.Identity.Name;
+            ViewBag.UserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+
+            var claims = await _userManager.GetClaimsAsync(user);
+
+            return View(claims);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> AddClaim(string type, string value)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+
+            var claims = await _userManager.AddClaimAsync(user, new Claim(type, value));
+
+            return RedirectToAction("Secret");
+        }
+
+        [HttpGet]
+        [Authorize(Policy = "Claims.DOB")]
+        public IActionResult SecretWithPolicy()
         {
             ViewBag.UserName = User.Identity.Name;
             ViewBag.UserRole = User.FindFirst(ClaimTypes.Role)?.Value;
@@ -38,14 +77,15 @@ namespace AuthExample.Controllers
             return View();
         }
 
-        //[Authorize(Roles = "admin, sales")]
-        //public IActionResult SecretWithRole()
-        //{
-        //    ViewBag.UserName = User.Identity.Name;
-        //    ViewBag.UserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+        [HttpGet]
+        [Authorize(Roles = "admin, sales")]
+        public IActionResult SecretWithRole()
+        {
+            ViewBag.UserName = User.Identity.Name;
+            ViewBag.UserRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        //    return View();
-        //}
+            return View();
+        }
 
         [HttpGet]
         public IActionResult AccessDenied()
@@ -55,6 +95,7 @@ namespace AuthExample.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login(string returnUrl)
         {
@@ -63,6 +104,7 @@ namespace AuthExample.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password, string returnUrl, string role = "user")
         {
@@ -77,7 +119,7 @@ namespace AuthExample.Controllers
                 return Redirect(returnUrl);
             }
 
-            #region claims, claimsIdentity, ClaimsPrincipal
+#region claims, claimsIdentity, ClaimsPrincipal
             //var jdClaims = new List<Claim> {
             //    new Claim(ClaimTypes.Name, username),
             //    new Claim(ClaimTypes.Role, role ?? "user"),
@@ -100,16 +142,17 @@ namespace AuthExample.Controllers
             //await HttpContext.SignInAsync(user);
 
             //return Redirect(returnUrl);
-            #endregion
+#endregion
 
 
             ViewBag.ReturnUrl = returnUrl ?? "/Home/Index";
-            ViewData["ErrorMessage"] =  result.ToString();
+            ViewData["ErrorMessage"] = result.ToString();
 
             return View();
 
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Register()
         {
@@ -118,8 +161,10 @@ namespace AuthExample.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> Register(string username, string password, string wechat, string unionId)
+        public async Task<IActionResult> Register(string username, string role,
+            string password, string wechat, string unionId)
         {
             var user = new WebUser()
             {
@@ -132,6 +177,21 @@ namespace AuthExample.Controllers
 
             if (result.Succeeded)
             {
+                if (!string.IsNullOrEmpty(role))
+                {
+                    var foundRole = await _roleManager.FindByNameAsync(role);
+                    if (foundRole == null)
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole() { Name = role });
+                    }
+                    await _userManager.AddToRoleAsync(user, role);
+                }
+
+                if (username == "slinwithdob")
+                {
+                    await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.DateOfBirth, "1986-01-01"));
+                }
+
                 await _signInManager.SignInAsync(user, false);
 
                 return RedirectToAction("Index");
@@ -140,7 +200,7 @@ namespace AuthExample.Controllers
             {
                 var error = result.Errors?.FirstOrDefault();
 
-                if(error!=null)
+                if (error != null)
                 {
                     ViewBag.ErrorMessage = $"{error.Code} -  {error.Description}";
                 }
@@ -149,7 +209,6 @@ namespace AuthExample.Controllers
                     ViewBag.ErrorMessage = result.ToString();
                 }
             }
-
 
             return View();
         }
@@ -162,6 +221,29 @@ namespace AuthExample.Controllers
             await _signInManager.SignOutAsync();
 
             return RedirectToAction("Index");
+        }
+
+        private void DecryptCookie()
+        {
+
+            //Get the encrypted cookie value
+            string cookieName = "auth-example";
+            string cookieSchema = IdentityConstants.ApplicationScheme;  //"Identity.Application"; 
+
+            var httpContext = HttpContext;
+            var opt = httpContext.RequestServices.GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>();
+            var cookie = opt.CurrentValue.CookieManager.GetRequestCookie(httpContext, cookieName);
+
+            // Decrypt if found
+            if (!string.IsNullOrEmpty(cookie))
+            {
+                var dataProtector = opt.CurrentValue.DataProtectionProvider.CreateProtector("Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationMiddleware", cookieSchema, "v2");
+
+                var ticketDataFormat = new TicketDataFormat(dataProtector);
+                var ticket = ticketDataFormat.Unprotect(cookie);
+
+                var clains = ticket?.Principal?.Claims;
+            }
         }
     }
 }

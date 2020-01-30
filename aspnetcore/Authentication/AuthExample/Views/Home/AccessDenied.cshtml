@@ -7,11 +7,12 @@
 
 @if (!string.IsNullOrEmpty(@ViewBag.UserName as string))
 {
-    <h2>Welcome: @ViewBag.UserName / @ViewBag.UserRole ! BUT YOU HAS NO PERMISSION TO ACCESS THE PAGE....</h2>
+    <h2>Welcome: @ViewBag.UserName / @ViewBag.UserRole </h2>
+    <h3 style="color:red">! BUT YOU HAS NO PERMISSION TO ACCESS THE PAGE....</h3>
 }
 else
 {
-    <h2>You did not log into the system yet.</h2>
+    <h2>You did not log into the system yet. Please goes to <a href="/Home/Login">login</a> page.</h2>
 }
 
 <a href="/Home/Index">Index</a>
