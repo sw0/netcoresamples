@@ -10,6 +10,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7EA7DF33-8
 		readme.md = readme.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "basic", "basic", "{2BB8548B-C762-4EC5-ABF1-0BCF5276933B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "oauth", "oauth", "{13FF05C0-F46D-4E9C-97C3-49688AD0B2B3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuthExample", "OAuthExample\OAuthExample.csproj", "{00188515-F1D8-4EC3-9F55-509C50851B2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,9 +26,17 @@ Global
 		{953DDD55-2B0C-4D25-BB64-20B6B51BD8CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{953DDD55-2B0C-4D25-BB64-20B6B51BD8CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{953DDD55-2B0C-4D25-BB64-20B6B51BD8CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00188515-F1D8-4EC3-9F55-509C50851B2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00188515-F1D8-4EC3-9F55-509C50851B2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00188515-F1D8-4EC3-9F55-509C50851B2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00188515-F1D8-4EC3-9F55-509C50851B2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{953DDD55-2B0C-4D25-BB64-20B6B51BD8CD} = {2BB8548B-C762-4EC5-ABF1-0BCF5276933B}
+		{00188515-F1D8-4EC3-9F55-509C50851B2A} = {13FF05C0-F46D-4E9C-97C3-49688AD0B2B3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11645A2A-4625-4275-9EF1-E4834D33F83D}
